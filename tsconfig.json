@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+		"module": "commonjs",
+		"target": "es6",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+		"lib": [
+			"es6", "dom"
+		],
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "strict": true
+  },
+	"exclude": [
+		"node_modules",
+		".vscode-test"
+  ],
+	"include": ["src"]
+}
