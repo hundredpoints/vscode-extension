@@ -1,16 +1,30 @@
-// Place your settings in this file to overwrite default and user settings.
 {
-    "files.exclude": {
-        "dist": true // set this to true to hide the "out" folder with the compiled JS files
-    },
-    "search.exclude": {
-        "dist": true // set this to false to include "out" folder in search results
-    },
-    // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-    "typescript.tsc.autoDetect": "off",
-    "cSpell.words": [
-        "Timesheet",
-        "hundredpoints",
-        "timesheets"
-    ]
+  "files.exclude": {
+    "dist": false // set this to true to hide the "dist" folder with the compiled JS files
+  },
+  "search.exclude": {
+    "dist": true
+  },
+  // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
+  "typescript.tsc.autoDetect": "off",
+  "cSpell.words": [
+    "Enablement",
+    "Envalid",
+    "Submodule",
+    "Timesheet",
+    "UNTRACKED",
+    "camelcase",
+    "codicon",
+    "hundredpoints",
+    "keytar",
+    "mimetype",
+    "serializable",
+    "signoff",
+    "submodules",
+    "timesheets",
+    "treeish",
+    "tsdoc",
+    "unshallow",
+    "webviews"
+  ]
 }

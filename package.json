@@ -1,8 +1,9 @@
 {
   "name": "@hundredpoints/hundredpoints-vscode",
-  "displayName": "hundredpoints-vscode",
+  "displayName": "Hundredpoints vscode",
   "description": "",
   "version": "0.0.1",
+  "publisher": "hundredpoints",
   "engines": {
     "vscode": "^1.44.0"
   },
@@ -13,21 +14,42 @@
   "activationEvents": [
     "*"
   ],
-  "contributes": {},
+  "contributes": {
+    "commands": [
+      {
+        "command": "catCoding.start",
+        "title": "Start cat coding session",
+        "category": "Cat Coding"
+      },
+      {
+        "command": "catCoding.doRefactor",
+        "title": "Do some refactoring",
+        "category": "Cat Coding"
+      }
+    ]
+  },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "watch": "tsc -watch -p ./"
+    "vscode:prepublish": "webpack --mode production",
+    "webpack": "webpack --mode development",
+    "webpack-dev": "webpack --mode development --watch",
+    "test-compile": "tsc -p ./"
   },
   "devDependencies": {
+    "@hundredpoints/eslint-plugin-hundredpoints": "0.0.6",
     "@types/node": "^13.13.11",
+    "@types/node-fetch": "^2.5.7",
     "@types/path-is-inside": "^1.0.0",
+    "@types/react": "^16.9.35",
+    "@types/react-dom": "^16.9.8",
     "@types/vscode": "^1.45.1",
     "@typescript-eslint/eslint-plugin": "^2.34.0",
     "@typescript-eslint/parser": "^2.34.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "dotenv-webpack": "^1.8.0",
     "eslint": "^7.2.0",
     "eslint-config-prettier": "^6.11.0",
+    "eslint-import-resolver-typescript": "^2.0.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-import": "^2.21.1",
     "eslint-plugin-jest": "^23.13.2",
@@ -35,6 +57,8 @@
     "eslint-plugin-react-hooks": "^4.0.4",
     "eslint-plugin-tsdoc": "^0.2.5",
     "eslint-plugin-unicorn": "^20.1.0",
+    "glob": "^7.1.6",
+    "node-loader": "^0.6.0",
     "prettier": "^2.0.5",
     "ts-loader": "^7.0.5",
     "typescript": "^3.9.5",
@@ -43,7 +67,12 @@
     "webpack-cli": "^3.3.11"
   },
   "dependencies": {
-    "path-is-inside": "^1.0.2"
+    "keytar": "^6.0.1",
+    "node-fetch": "^2.6.0",
+    "openid-client": "^3.15.2",
+    "path-is-inside": "^1.0.2",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
   },
   "extensionDependencies": [
     "vscode.git"

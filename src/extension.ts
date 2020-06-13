@@ -1,13 +1,34 @@
-import * as vscode from 'vscode';
+import { ExtensionContext } from "vscode";
 
-import TimesheetExtension from "./timesheets"
+import { authenticate } from "./features/authentication";
 
-const timesheetExtension = new TimesheetExtension()
+class Hundredpoints {
+  static current: Hundredpoints | undefined;
 
-export function activate(context: vscode.ExtensionContext) {
-  timesheetExtension.activate(context)
+  private context: ExtensionContext;
+
+  static create(context: ExtensionContext): void {
+    Hundredpoints.current = new Hundredpoints(context);
+    Hundredpoints.current.activate();
+  }
+
+  private constructor(context: ExtensionContext) {
+    this.context = context;
+  }
+
+  public activate(): void {
+    authenticate();
+  }
+
+  public deactivate(): void {
+    return;
+  }
 }
 
-export function deactivate() {
-  timesheetExtension.deactivate()
+export function activate(context: ExtensionContext): void {
+  Hundredpoints.create(context);
+}
+
+export function deactivate(): void {
+  Hundredpoints.current?.deactivate();
 }
