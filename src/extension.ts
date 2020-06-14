@@ -6,6 +6,8 @@ class Hundredpoints {
   static current: Hundredpoints | undefined;
 
   private context: ExtensionContext;
+  private accessToken: string | undefined;
+  private nextAuthenticateRefresh: NodeJS.Timeout | undefined;
 
   static create(context: ExtensionContext): void {
     Hundredpoints.current = new Hundredpoints(context);
@@ -17,11 +19,28 @@ class Hundredpoints {
   }
 
   public activate(): void {
-    authenticate();
+    this.authenticate();
   }
 
   public deactivate(): void {
-    return;
+    if (this.nextAuthenticateRefresh) {
+      clearTimeout(this.nextAuthenticateRefresh);
+    }
+  }
+
+  public async authenticate(): Promise<void> {
+    const response = await authenticate();
+
+    // User cancelled or something went wrong...
+    if (!response) {
+      return;
+    }
+
+    this.accessToken = response.accessToken;
+
+    this.nextAuthenticateRefresh = setTimeout(() => {
+      this.authenticate();
+    }, (response.expiresIn / 2) * 1000);
   }
 }
 

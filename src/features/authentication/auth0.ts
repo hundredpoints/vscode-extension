@@ -5,10 +5,10 @@ import {
   DeviceCodeResponse,
   ApiDeviceCodeResponse,
   ApiDeviceTokenResponse,
-  ApiDeviceTokenResponseSuccess,
   DeviceTokenResponseSuccess,
-  ApiRefreshTokenResponse,
-  RefreshTokenResponse,
+  ApiRefreshTokenSuccess,
+  RefreshResponse,
+  ApiRefreshTokenError,
 } from "./types";
 
 import config from "../../config";
@@ -51,9 +51,9 @@ export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
 
 function isTokenResponseSuccess(
   body: ApiDeviceTokenResponse
-): body is ApiDeviceTokenResponseSuccess {
+): body is DeviceTokenResponseSuccess {
   return Boolean(
-    ((body as unknown) as ApiDeviceTokenResponseSuccess).access_token
+    ((body as unknown) as DeviceTokenResponseSuccess).access_token
   );
 }
 
@@ -67,7 +67,7 @@ export async function pollForToken(
   deviceCode: string,
   interval: number,
   token: CancellationToken
-): Promise<DeviceTokenResponseSuccess | undefined> {
+): Promise<RefreshResponse | undefined> {
   const data = new URLSearchParams();
   data.append("client_id", AUTH0_CLIENT_ID);
   data.append("device_code", deviceCode);
@@ -123,7 +123,7 @@ export async function pollForToken(
 
 export async function refreshAuthentication(
   refreshToken: string
-): Promise<RefreshTokenResponse> {
+): Promise<RefreshResponse | undefined> {
   const data = new URLSearchParams();
   data.append("client_id", AUTH0_CLIENT_ID);
   data.append("refresh_token", refreshToken);
@@ -137,12 +137,17 @@ export async function refreshAuthentication(
     body: data,
   });
 
-  const body: ApiRefreshTokenResponse = await response.json();
+  if (!response.ok) {
+    const error: ApiRefreshTokenError = await response.json();
+    console.error(`${error.error}: ${error.error_description}`);
+    return;
+  }
+
+  const body: ApiRefreshTokenSuccess = await response.json();
 
   return {
     accessToken: body.access_token,
     expiresIn: body.expires_in,
-    scope: body.scope,
     idToken: body.id_token,
     refreshToken: body.refresh_token,
     tokenType: body.token_type,

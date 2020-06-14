@@ -31,15 +31,15 @@ interface ApiDeviceTokenResponseError {
   error_description: string;
 }
 
-interface ApiDeviceTokenResponseSuccess {
-  access_token: string;
-  refresh_token: string;
-  id_token: string;
-  token_type: "Bearer";
-  expires_in: number;
-}
-
 interface DeviceTokenResponseSuccess {
+  access_token: string;
+  refresh_token: string;
+  id_token: string;
+  token_type: "Bearer";
+  expires_in: number;
+}
+
+interface RefreshResponse {
   accessToken: string;
   refreshToken: string;
   idToken: string;
@@ -47,7 +47,7 @@ interface DeviceTokenResponseSuccess {
   expiresIn: number;
 }
 
-export interface ApiRefreshTokenResponse {
+export interface ApiRefreshTokenSuccess {
   access_token: string;
   refresh_token: string;
   idToken: string;
@@ -57,11 +57,11 @@ export interface ApiRefreshTokenResponse {
   token_type: "Bearer";
 }
 
-export interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  scope: string;
-  idToken: string;
-  tokenType: "Bearer";
+export interface ApiRefreshTokenError {
+  error: string;
+  error_description: string;
+}
+
+export interface VerifyTokenResponse {
+  profiles: never[];
 }
