@@ -7,7 +7,11 @@ import {
   pollForToken,
   refreshAuthentication,
 } from "./auth0";
-import { RefreshResponse, VerifyTokenResponse } from "./types";
+import {
+  AuthenticateResponse,
+  RefreshResponse,
+  VerifyTokenResponse,
+} from "./types";
 
 const SIGN_IN = "Sign in";
 const SIGN_IN_WITH_CODE = "Understood";
@@ -95,7 +99,7 @@ async function promptUnauthenticatedUser(): Promise<
   );
 }
 
-export async function authenticate(): Promise<RefreshResponse | void> {
+export async function authenticate(): Promise<AuthenticateResponse | void> {
   try {
     const [credentials] = await findCredentials(SERVICE);
 
@@ -117,8 +121,6 @@ export async function authenticate(): Promise<RefreshResponse | void> {
     if (!response) {
       response = await promptUnauthenticatedUser();
       shouldShowUserSuccessMessage = true;
-
-      console.log(7777, response);
     }
 
     /**
@@ -133,21 +135,22 @@ export async function authenticate(): Promise<RefreshResponse | void> {
     try {
       const verifyResponse = await verifyToken(accessToken);
       console.log(verifyResponse);
+
+      const { sub, name } = getUserFromIdToken(idToken);
+      await setPassword(SERVICE, sub, refreshToken);
+
+      console.log(`Successfully logged in as sub:${sub} name:${name}`);
+      if (shouldShowUserSuccessMessage) {
+        vscode.window.showInformationMessage(
+          `Successfully logged in as ${name}`
+        );
+      }
+      return { ...response, ...verifyResponse };
     } catch (error) {
       console.error(error);
       vscode.window.showErrorMessage(`Error validating token`);
       return;
     }
-
-    const { sub, name } = getUserFromIdToken(idToken);
-    await setPassword(SERVICE, sub, refreshToken);
-
-    console.log(`Successfully logged in as sub:${sub} name:${name}`);
-    if (shouldShowUserSuccessMessage) {
-      vscode.window.showInformationMessage(`Successfully logged in as ${name}`);
-    }
-
-    return response;
   } catch (error) {
     console.error(error);
     vscode.window.showErrorMessage("Error when logging into account");

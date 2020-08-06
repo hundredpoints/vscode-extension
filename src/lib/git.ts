@@ -3,6 +3,10 @@ import pathIsInside from "path-is-inside";
 
 import { API as GitAPI, Repository } from "../@types/git";
 
+export interface FileInfo {
+  remoteUrl?: string;
+}
+
 function getVSCodeGit(): GitAPI {
   const gitExtension = vscode.extensions.getExtension("vscode.git")?.exports;
   return gitExtension.getAPI(1);
@@ -24,14 +28,20 @@ export function findFileRepository(fileName: string): Repository | undefined {
   });
 }
 
-export function getFileRemote(fileName: string): string | undefined {
-  const repo = findFileRepository(fileName);
+export function getRepositoryRemote(
+  repository: Repository
+): string | undefined {
+  return repository.state.HEAD?.remote || repository.state.remotes[0].fetchUrl;
+}
 
-  if (repo?.state.HEAD?.remote) {
-    return repo.state.HEAD?.remote;
+export function getFileInfo(fileName: string): FileInfo {
+  const repository = findFileRepository(fileName);
+
+  if (!repository) {
+    return {};
   }
 
-  if (repo?.state.remotes.length) {
-    return repo.state.remotes[0].fetchUrl;
-  }
+  return {
+    remoteUrl: getRepositoryRemote(repository),
+  };
 }

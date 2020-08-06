@@ -47,6 +47,10 @@ interface RefreshResponse {
   expiresIn: number;
 }
 
+export interface AuthenticateResponse
+  extends RefreshResponse,
+    VerifyTokenResponse {}
+
 export interface ApiRefreshTokenSuccess {
   access_token: string;
   refresh_token: string;
@@ -63,5 +67,5 @@ export interface ApiRefreshTokenError {
 }
 
 export interface VerifyTokenResponse {
-  profiles: never[];
+  profiles: string[];
 }
