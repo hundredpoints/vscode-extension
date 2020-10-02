@@ -1,28 +1,21 @@
 import { ExtensionContext } from "vscode";
 
 import fetch from "node-fetch";
-
-import { authenticate } from "./features/authentication";
-
-import TimesheetExtension from "./features/timesheet";
+import authenticate from "./features/authentication";
 
 import { registerCommands } from "./commands";
 
-const graphqlEndpoint = "http://localhost:3000/api/graphql";
+/** Features */
+import TimesheetExtension from "./features/timesheet";
 
 /**
  * Singleton Class for the HundredPoints Extension
  */
 export class Hundredpoints {
-  static current: Hundredpoints | undefined;
-
   private context: ExtensionContext;
+  private timesheet: TimesheetExtension;
 
   private accessToken: string | undefined;
-  private nextAuthenticateRefresh: NodeJS.Timeout | undefined;
-  private profileId: string | undefined;
-
-  private timesheet: TimesheetExtension;
 
   /**
    * Factory function to ensure that this class is a singleton
@@ -33,6 +26,7 @@ export class Hundredpoints {
     Hundredpoints.current = new Hundredpoints(context);
     Hundredpoints.current.activate();
   }
+  static current: Hundredpoints | undefined;
 
   /**
    * Private constructor to ensure class must be created through the static create function
@@ -41,12 +35,12 @@ export class Hundredpoints {
   private constructor(context: ExtensionContext) {
     this.context = context;
 
+    const request = this.request.bind(this);
+
     /**
      * Setup the sub-extensions
      */
-    this.timesheet = new TimesheetExtension({
-      requestFn: this.request.bind(this),
-    });
+    this.timesheet = new TimesheetExtension({ request });
   }
 
   /**
@@ -69,7 +63,6 @@ export class Hundredpoints {
    */
   public deactivate(): void {
     this.logout();
-
     this.timesheet.deactivate();
   }
 
@@ -87,33 +80,19 @@ export class Hundredpoints {
 
   public logout(): void {
     this.accessToken = undefined;
-    this.profileId = undefined;
     this.deactivateExtensions();
-
-    if (this.nextAuthenticateRefresh) {
-      clearTimeout(this.nextAuthenticateRefresh);
-    }
   }
 
   public async authenticate(): Promise<void> {
-    const response = await authenticate();
+    const token = await authenticate();
 
     // User cancelled or something went wrong...
-    if (!response) {
+    if (!token) {
       this.logout();
       return;
     }
 
-    this.accessToken = response.accessToken;
-    this.profileId = response.profiles[0];
     this.activateExtensions();
-
-    this.nextAuthenticateRefresh = setTimeout(() => {
-      this.authenticate().catch((error) => {
-        console.error(error);
-        this.logout();
-      });
-    }, (response.expiresIn / 2) * 1000);
   }
 
   private async request<D, V = unknown>({
@@ -125,8 +104,7 @@ export class Hundredpoints {
     method?: string;
     variables?: V;
   }): Promise<D> {
-    console.log(1, this.profileId);
-    const response = await fetch(graphqlEndpoint, {
+    const response = await fetch("http://localhost:3000/api/graphql", {
       method,
       headers: {
         Accept: "application/json",
@@ -136,9 +114,13 @@ export class Hundredpoints {
       body: JSON.stringify({
         query,
         variables,
-        profileId: this.profileId,
       }),
     });
+
+    // Should handle some global errors here
+    if (!response.ok) {
+      throw response;
+    }
 
     return response.json();
   }

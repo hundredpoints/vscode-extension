@@ -3,10 +3,8 @@ import vscode, { ExtensionContext, Disposable } from "vscode";
 import { getFileInfo } from "../../lib/git";
 import { Hundredpoints } from "src/extension";
 
-type RequestFn = Hundredpoints["request"];
-
 interface TimesheetExtensionConstructor {
-  requestFn: RequestFn;
+  request: Hundredpoints["request"];
 }
 
 export default class TimesheetExtension {
@@ -15,10 +13,10 @@ export default class TimesheetExtension {
   private lastFileName: string | undefined = undefined;
   private lastEventTimestamp = 0;
 
-  requestFn: RequestFn;
+  request: Hundredpoints["request"];
 
-  constructor({ requestFn }: TimesheetExtensionConstructor) {
-    this.requestFn = requestFn;
+  constructor({ request }: TimesheetExtensionConstructor) {
+    this.request = request;
   }
 
   public register(context: ExtensionContext): void {
@@ -79,7 +77,7 @@ export default class TimesheetExtension {
 
     console.log("Sending event", remoteUrl, fileName);
 
-    const response = await this.requestFn({
+    const response = await this.request({
       method: "post",
       query: `
         mutation CreateActivityEvent($input: CreateActivityEventInput!) {
