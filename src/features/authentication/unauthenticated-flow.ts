@@ -26,6 +26,13 @@ export default async function unauthenticatedFlow(): Promise<
     tokenUri,
   } = await requestDeviceCode();
 
+  console.log({
+    code,
+    interval,
+    verificationUri,
+    tokenUri,
+  });
+
   const maybeOpen = await vscode.env.openExternal(Uri.parse(verificationUri));
 
   if (!maybeOpen) {

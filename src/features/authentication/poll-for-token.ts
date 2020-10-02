@@ -1,4 +1,5 @@
 import { CancellationToken } from "vscode";
+import fetch from "node-fetch";
 
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -15,8 +16,8 @@ export enum POLL_FOR_TOKEN_ERROR {
 
 export async function pollForToken(
   token: CancellationToken,
-  code: string,
   tokenUri: string,
+  code: string,
   interval: number
 ): Promise<string | { error: POLL_FOR_TOKEN_ERROR }> {
   const response = await fetch(tokenUri, {
@@ -40,12 +41,12 @@ export async function pollForToken(
 
   if (body.error === "authorization_pending") {
     await sleep(interval * 1000);
-    return pollForToken(token, code, tokenUri, interval);
+    return pollForToken(token, tokenUri, code, interval);
   }
 
   if (body.error === "slow_down") {
     await sleep(interval * 5000);
-    return pollForToken(token, code, tokenUri, interval);
+    return pollForToken(token, tokenUri, code, interval);
   }
 
   if (body.error === "access_denied") {

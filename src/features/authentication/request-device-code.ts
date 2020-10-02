@@ -14,6 +14,10 @@ export default async function requestDeviceCode(): Promise<
 > {
   const response = await fetch(`http://localhost:3000/api/auth/machine/code`, {
     method: "post",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       name: os.hostname(),
       integration: "visual-studio-code",
@@ -25,8 +29,6 @@ export default async function requestDeviceCode(): Promise<
     console.log(error);
     throw new Error(error);
   }
-
-  console.log;
 
   return response.json();
 }
