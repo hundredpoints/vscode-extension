@@ -22,6 +22,10 @@ export async function pollForToken(
 ): Promise<string | { error: POLL_FOR_TOKEN_ERROR }> {
   const response = await fetch(tokenUri, {
     method: "post",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       code,
     }),
@@ -40,12 +44,12 @@ export async function pollForToken(
   }
 
   if (body.error === "authorization_pending") {
-    await sleep(interval * 1000);
+    await sleep(interval);
     return pollForToken(token, tokenUri, code, interval);
   }
 
   if (body.error === "slow_down") {
-    await sleep(interval * 5000);
+    await sleep(interval * 5);
     return pollForToken(token, tokenUri, code, interval);
   }
 

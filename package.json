@@ -1,11 +1,11 @@
 {
-  "name": "@hundredpoints/hundredpoints-vscode",
+  "name": "hundredpoints",
   "displayName": "Hundredpoints vscode",
   "description": "",
   "version": "0.0.1",
-  "publisher": "hundredpoints",
+  "publisher": "HundredPoints",
   "engines": {
-    "vscode": "^1.44.0"
+    "vscode": "^1.45.1"
   },
   "main": "./dist/extension.js",
   "categories": [
@@ -33,7 +33,8 @@
     "vscode:prepublish": "webpack --mode production",
     "webpack": "webpack --mode development",
     "webpack-dev": "webpack --mode development --watch",
-    "test-compile": "tsc -p ./"
+    "test-compile": "tsc -p ./",
+    "test-package": "npm run vscode:prepublish && vsce package --no-yarn"
   },
   "devDependencies": {
     "@hundredpoints/eslint-plugin-hundredpoints": "0.0.6",
@@ -62,6 +63,7 @@
     "prettier": "^2.0.5",
     "ts-loader": "^7.0.5",
     "typescript": "^3.9.5",
+    "vsce": "^1.81.0",
     "vscode-test": "^1.4.0",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"

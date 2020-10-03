@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type this later
 export default async function getMe(token: string): Promise<any> {
   const response = await fetch("http://localhost:3000/api/graphql", {
-    method: "get",
+    method: "post",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
