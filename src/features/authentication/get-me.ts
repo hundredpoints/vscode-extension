@@ -1,5 +1,17 @@
 import fetch from "node-fetch";
 
+export interface GetMeResponse {
+  data: {
+    me: {
+      id: string;
+      profile: {
+        name: string;
+        nickname: string;
+      };
+    };
+  };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type this later
 export default async function getMe(token: string): Promise<any> {
   const response = await fetch("http://localhost:3000/api/graphql", {
@@ -14,7 +26,10 @@ export default async function getMe(token: string): Promise<any> {
         {
           me {
             id
-            name
+            profile {
+              id
+              name
+            }
           }
         }
         `,

@@ -1,6 +1,6 @@
 import vscode, { ExtensionContext, Disposable } from "vscode";
 
-import { getFileInfo } from "../../lib/git";
+import { getFileInfo } from "../git";
 import { Hundredpoints } from "src/extension";
 
 interface TimesheetExtensionConstructor {

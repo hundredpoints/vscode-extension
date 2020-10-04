@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
+import { isAbsolute } from "path";
 import pathIsInside from "path-is-inside";
 
-import { API as GitAPI, Repository } from "../@types/git";
+import { API as GitAPI, Repository } from "../../@types/git";
 
 export interface FileInfo {
   remoteUrl?: string;
@@ -18,14 +19,7 @@ export function findFileRepository(fileName: string): Repository | undefined {
     return pathIsInside(fileName, repo.rootUri.fsPath);
   });
 
-  if (matches.length === 0) {
-    return;
-  }
-
-  // eslint-disable-next-line unicorn/no-reduce -- Reduce is an easier way to find the max
-  return matches.reduce((a, b) => {
-    return a.rootUri.fsPath.length > b.rootUri.fsPath.length ? a : b;
-  });
+  return matches.find(({ rootUri }) => isAbsolute(rootUri.fsPath));
 }
 
 export function getRepositoryRemote(

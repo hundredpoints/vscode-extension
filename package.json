@@ -17,14 +17,14 @@
   "contributes": {
     "commands": [
       {
-        "command": "catCoding.start",
-        "title": "Start cat coding session",
-        "category": "Cat Coding"
+        "command": "hundredpoints.login",
+        "title": "Login",
+        "category": "HundredPoints"
       },
       {
-        "command": "catCoding.doRefactor",
-        "title": "Do some refactoring",
-        "category": "Cat Coding"
+        "command": "hundredpoints.clearCredentials",
+        "title": "Clear credentials",
+        "category": "HundredPoints"
       }
     ]
   },

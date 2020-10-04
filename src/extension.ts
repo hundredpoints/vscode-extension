@@ -1,4 +1,4 @@
-import { ExtensionContext } from "vscode";
+import vscode, { ExtensionContext } from "vscode";
 
 import fetch from "node-fetch";
 import authenticate from "./features/authentication";
@@ -16,6 +16,11 @@ export class Hundredpoints {
   private timesheet: TimesheetExtension;
 
   private accessToken: string | undefined;
+  private profile: { name: string } | undefined;
+
+  private statusBar: vscode.StatusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left
+  );
 
   /**
    * Factory function to ensure that this class is a singleton
@@ -37,6 +42,9 @@ export class Hundredpoints {
 
     const request = this.request.bind(this);
 
+    this.statusBar.text = "$(clock) HundredPoints Initializing...";
+    this.statusBar.show();
+
     /**
      * Setup the sub-extensions
      */
@@ -54,6 +62,9 @@ export class Hundredpoints {
     this.authenticate();
     registerCommands(this);
     this.timesheet.register(this.context);
+
+    this.statusBar.text = "$(clock)";
+    this.statusBar.tooltip = "Hundredpoints: Initialized";
   }
 
   /**
@@ -84,15 +95,18 @@ export class Hundredpoints {
   }
 
   public async authenticate(): Promise<void> {
-    const token = await authenticate();
+    const response = await authenticate();
 
-    // User cancelled or something went wrong...
-    if (!token) {
-      this.logout();
+    if (!response) {
       return;
     }
 
-    this.activateExtensions();
+    this.accessToken = response.token;
+    this.accessToken ? this.activateExtensions() : this.logout();
+
+    this.profile = response.profile;
+
+    this.statusBar.tooltip = `Hundredpoints: Authenticated as ${this.profile.name}`;
   }
 
   private async request<D, V = unknown>({

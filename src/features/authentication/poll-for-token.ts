@@ -61,5 +61,7 @@ export async function pollForToken(
     return { error: POLL_FOR_TOKEN_ERROR.EXPIRED_CODE };
   }
 
+  console.log(body);
+
   return { error: POLL_FOR_TOKEN_ERROR.UNKNOWN };
 }
