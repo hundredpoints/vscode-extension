@@ -4,22 +4,16 @@ export const PASSWORD_SERVICE =
   "hundredpoints.io/integration/visual-studio-code";
 
 export async function getCredentials(): Promise<
-  | {
-      account: string;
-      token: string;
-    }
-  | undefined
+  Array<{
+    account: string;
+    token: string;
+  }>
 > {
-  const [credentials] = await findCredentials(PASSWORD_SERVICE);
-
-  if (!credentials) {
-    return;
-  }
-
-  return {
-    account: credentials.account,
-    token: credentials.password,
-  };
+  const credentials = await findCredentials(PASSWORD_SERVICE);
+  return credentials.map(({ account, password }) => ({
+    account,
+    token: password,
+  }));
 }
 
 export async function saveCredentials(

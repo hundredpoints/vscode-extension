@@ -2,80 +2,56 @@ import vscode, { Uri } from "vscode";
 import { Session } from "./authenticate";
 import getMe from "./get-me";
 
-import { pollForToken } from "./poll-for-token";
-import requestDeviceCode from "./request-device-code";
 import { saveCredentials } from "./store";
 
-const SIGN_IN = "Sign in";
+const GET_ACCESS_TOKEN = "Get access token";
+const ENTER_ACCESS_TOKEN = "Enter access token";
 
-export default async function unauthenticatedFlow(): Promise<
-  Session | undefined
-> {
-  const maybeSignIn = await vscode.window.showInformationMessage(
-    "You are not signed into HundredPoints",
-    SIGN_IN
-  );
-
-  if (maybeSignIn !== SIGN_IN) {
-    return;
-  }
-
-  const {
-    code,
-    interval,
-    verificationUri,
-    tokenUri,
-  } = await requestDeviceCode();
-
-  const maybeOpen = await vscode.env.openExternal(Uri.parse(verificationUri));
-
-  if (!maybeOpen) {
-    vscode.window.showErrorMessage(
-      `An error occurred with the sign-in process`
+export default async function unauthenticatedFlow(
+  showInitialPrompt = true
+): Promise<Session | undefined> {
+  if (showInitialPrompt) {
+    const maybeSignIn = await vscode.window.showInformationMessage(
+      "No access token found for HundredPoints.",
+      GET_ACCESS_TOKEN,
+      ENTER_ACCESS_TOKEN
     );
+
+    if (maybeSignIn === GET_ACCESS_TOKEN) {
+      await vscode.env.openExternal(
+        Uri.parse("http://localhost:3000/integrations/access-tokens")
+      );
+    }
+  }
+
+  const accessToken = await vscode.window.showInputBox({
+    prompt: "Enter your HundredPoints access-token here.",
+  });
+
+  if (!accessToken) {
     return;
   }
 
-  return vscode.window.withProgress(
-    {
-      cancellable: true,
-      title: `Waiting for authorization, please accept from your browser.`,
-      location: 15,
-    },
-    async (_, cancellationToken) => {
-      try {
-        const token = await pollForToken(
-          cancellationToken,
-          tokenUri,
-          code,
-          interval
-        );
+  try {
+    const {
+      data: { me },
+    } = await getMe(accessToken);
+    console.log("Saving credentials");
 
-        if (typeof token !== "string") {
-          console.log(token);
-          return;
-        }
+    await saveCredentials(me.profile.id, accessToken);
 
-        const {
-          data: { me },
-        } = await getMe(token);
-        console.log("Saving credentials");
-        await saveCredentials(me.id, token);
+    console.log(`Successfully authenticated`);
+    vscode.window.showInformationMessage(
+      `Successfully authenticated as ${me.profile.name}`
+    );
 
-        console.log(`Successfully authenticated`);
-        vscode.window.showInformationMessage(
-          `Successfully authenticated as ${me.profile.name}`
-        );
-
-        return {
-          token,
-          user: me,
-          profile: me.profile,
-        };
-      } catch (error) {
-        vscode.window.showErrorMessage(error.message);
-        throw error;
-      }
-    }
-  );
+    return {
+      token: accessToken,
+      user: me,
+      profile: me.profile,
+    };
+  } catch (error) {
+    vscode.window.showErrorMessage(error.message);
+    throw error;
+  }
 }

@@ -2,6 +2,7 @@ import vscode, { ExtensionContext, Disposable } from "vscode";
 
 import { getFileInfo } from "../git";
 import { Hundredpoints } from "src/extension";
+import prettyMilliseconds from "pretty-ms";
 
 interface TimesheetExtensionConstructor {
   request: Hundredpoints["request"];
@@ -13,7 +14,18 @@ export default class TimesheetExtension {
   private lastFileName: string | undefined = undefined;
   private lastEventTimestamp = 0;
 
-  request: Hundredpoints["request"];
+  private playStart = 0;
+  private updateDisplayInterval = 1000 * 60;
+  declare updateDisplayTimeout: NodeJS.Timeout;
+
+  private idleLimit = 1000 * 60;
+  declare idleTimeout: NodeJS.Timeout;
+
+  private statusBar: vscode.StatusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left
+  );
+
+  private request: Hundredpoints["request"];
 
   constructor({ request }: TimesheetExtensionConstructor) {
     this.request = request;
@@ -40,10 +52,35 @@ export default class TimesheetExtension {
 
   public activate(): void {
     this.active = true;
+    this.statusBar.text = "$(debug-pause)";
+    this.statusBar.tooltip = "HundredPoints: Waiting for activity";
+    this.statusBar.show();
   }
 
   public deactivate(): void {
     this.active = false;
+    this.statusBar.hide();
+  }
+
+  private updateStatusBar(): void {
+    if (!this.playStart) {
+      this.statusBar.text = "$(debug-pause)";
+      return;
+    }
+
+    const displayTimeDiff = Date.now() - this.playStart;
+    const displayTime =
+      displayTimeDiff >= 1000 * 60
+        ? prettyMilliseconds(displayTimeDiff)
+        : "<1min";
+
+    this.statusBar.text = `$(play) ${displayTime}`;
+  }
+
+  private handleIdle(): void {
+    this.statusBar.text = "$(debug-pause)";
+    this.playStart = 0;
+    clearInterval(this.updateDisplayTimeout);
   }
 
   private handleOnActivity(): void {
@@ -58,6 +95,12 @@ export default class TimesheetExtension {
       return;
     }
 
+    if (this.idleTimeout) {
+      clearTimeout(this.idleTimeout);
+    }
+
+    this.idleTimeout = setTimeout(() => this.handleIdle(), this.idleLimit);
+
     const timestamp = Date.now();
     const timeToWaitBetweenUpdates = 2 * 60 * 1000;
     const hasEnoughTimePassed =
@@ -67,31 +110,42 @@ export default class TimesheetExtension {
       return;
     }
 
-    this.lastFileName = fileName;
+    if (fileName !== this.lastFileName) {
+      this.lastFileName = fileName;
+      this.playStart = timestamp;
+      clearInterval(this.updateDisplayTimeout);
+      this.updateStatusBar();
+      this.updateDisplayTimeout = setInterval(
+        () => this.updateStatusBar(),
+        this.updateDisplayInterval
+      );
+    }
+
     this.lastEventTimestamp = timestamp;
     this.sendActivityTimesheetEvent(fileName);
   }
 
-  async sendActivityTimesheetEvent(fileName: string): Promise<void> {
-    const { remoteUrl } = getFileInfo(fileName);
+  async sendActivityTimesheetEvent(filename: string): Promise<void> {
+    const { remoteUrl } = getFileInfo(filename);
 
-    console.log("Sending event", remoteUrl, fileName);
+    console.log("Sending event", remoteUrl, filename);
 
     const response = await this.request({
       method: "post",
-      query: `
-        mutation CreateActivityEvent($input: CreateActivityEventInput!) {
-          createActivityEvent(input: $input) {
-            event {
-              id
-            }
+      query: `mutation CreateActivityEvent($input: CreateIntegrationActivityEventInput!) {
+        createIntegrationActivityEvent(input: $input) {
+          code
+          error
+          message
+          activityEvent {
+            id
           }
         }
-      `,
+      }`,
       variables: {
         input: {
           remoteUrl,
-          fileName,
+          filename,
           startDateTime: new Date(),
         },
       },

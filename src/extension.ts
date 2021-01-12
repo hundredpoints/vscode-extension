@@ -1,7 +1,7 @@
 import vscode, { ExtensionContext } from "vscode";
 
 import fetch from "node-fetch";
-import authenticate from "./features/authentication";
+import authenticate, { AuthenticateOptions } from "./features/authentication";
 
 import { registerCommands } from "./commands";
 
@@ -16,7 +16,6 @@ export class Hundredpoints {
   private timesheet: TimesheetExtension;
 
   private accessToken: string | undefined;
-  private profile: { name: string } | undefined;
 
   private statusBar: vscode.StatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left
@@ -94,19 +93,21 @@ export class Hundredpoints {
     this.deactivateExtensions();
   }
 
-  public async authenticate(): Promise<void> {
-    const response = await authenticate();
+  public async authenticate(options: AuthenticateOptions = {}): Promise<void> {
+    const response = await authenticate(options);
 
     if (!response) {
+      console.log("Not authenticated");
+      this.statusBar.tooltip = "Hundredpoints: Initialized. Not authenticated.";
       return;
     }
+
+    this.statusBar.tooltip = "Hundredpoints: Initialized. Authenticated.";
 
     this.accessToken = response.token;
     this.accessToken ? this.activateExtensions() : this.logout();
 
-    this.profile = response.profile;
-
-    this.statusBar.tooltip = `Hundredpoints: Authenticated as ${this.profile.name}`;
+    this.statusBar.hide();
   }
 
   private async request<D, V = unknown>({

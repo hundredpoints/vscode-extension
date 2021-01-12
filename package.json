@@ -1,6 +1,6 @@
 {
   "name": "hundredpoints",
-  "displayName": "Hundredpoints vscode",
+  "displayName": "Hundredpoints",
   "description": "",
   "version": "0.0.1",
   "publisher": "HundredPoints",
@@ -34,7 +34,8 @@
     "webpack": "webpack --mode development",
     "webpack-dev": "webpack --mode development --watch",
     "test-compile": "tsc -p ./",
-    "test-package": "npm run vscode:prepublish && vsce package --no-yarn"
+    "test-package": "npm run vscode:prepublish && vsce package",
+    "deploy": "vsce publish"
   },
   "devDependencies": {
     "@hundredpoints/eslint-plugin-hundredpoints": "0.0.6",
@@ -71,8 +72,8 @@
   "dependencies": {
     "keytar": "^6.0.1",
     "node-fetch": "^2.6.0",
-    "openid-client": "^3.15.2",
     "path-is-inside": "^1.0.2",
+    "pretty-ms": "^7.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },

@@ -15,7 +15,9 @@ export function registerCommands(extension: Hundredpoints): void {
     );
   }
 
-  registerCommand("hundredpoints.login", () => extension.authenticate());
+  registerCommand("hundredpoints.login", () =>
+    extension.authenticate({ showInitialPrompt: false })
+  );
   registerCommand("hundredpoints.logout", () => extension.logout());
 
   registerCommand("hundredpoints.clearCredentials", () =>

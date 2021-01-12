@@ -15,30 +15,44 @@ export interface Session {
   };
 }
 
-export default async function authenticate(): Promise<Session | undefined> {
+export interface AuthenticateOptions {
+  showInitialPrompt?: boolean;
+}
+
+export default async function authenticate({
+  showInitialPrompt = true,
+}: AuthenticateOptions = {}): Promise<Session | undefined> {
   try {
     const credentials = await getCredentials();
 
-    if (!credentials) {
-      return unauthenticatedFlow();
+    if (credentials.length === 0) {
+      return unauthenticatedFlow(showInitialPrompt);
     }
 
-    const { token } = credentials;
-
-    return getMe(token).then(
-      ({ data: { me } }): Session => {
-        return {
-          token,
-          user: me,
-          profile: me.profile,
-        };
-      },
-      (error): undefined => {
-        console.error(error);
-        vscode.window.showErrorMessage("You have been signed out.");
-        return;
-      }
+    const loginTests = await Promise.all(
+      credentials.map(({ token }) => {
+        return getMe(token).then(
+          ({ data: { me } }) => {
+            return {
+              token,
+              user: me,
+              profile: me.profile,
+            };
+          },
+          (error) => {
+            return {
+              error,
+            };
+          }
+        );
+      })
     );
+
+    const validCredentials = loginTests.filter((test): test is Session => {
+      return !("error" in test);
+    });
+
+    return validCredentials[0];
   } catch (error) {
     console.error(error);
     vscode.window.showErrorMessage("Error when logging into account");

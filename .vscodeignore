@@ -1,10 +1,5 @@
-.vscode
-.vscode-test/**
-node_modules
-out/
-dist/
-src/
-tsconfig.json
-webpack.config.js
-.eslintrc.js
-.gitignore
+# Ignore everything (folders and files) on root only
+/*
+
+!.vscode
+!dist/
