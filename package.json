@@ -29,14 +29,14 @@
     ]
   },
   "scripts": {
+    "deploy": "vsce publish",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "vscode:prepublish": "webpack --mode production",
-    "webpack": "webpack --mode development",
-    "webpack-dev": "webpack --mode development --watch",
     "test": "echo 'No tests setup'",
     "test-compile": "tsc -p ./",
-    "test-package": "npm run vscode:prepublish && vsce package",
-    "deploy": "vsce publish"
+    "vscode:local-package": "npm run vscode:prepublish && vsce package",
+    "vscode:prepublish": "webpack --mode production",
+    "webpack": "webpack --mode development",
+    "webpack-dev": "webpack --mode development --watch"
   },
   "devDependencies": {
     "@hundredpoints/eslint-plugin-hundredpoints": "0.0.6",
@@ -60,6 +60,7 @@
     "eslint-plugin-tsdoc": "^0.2.10",
     "eslint-plugin-unicorn": "^26.0.1",
     "glob": "^7.1.6",
+    "jest": "^26.6.3",
     "node-loader": "^1.0.2",
     "prettier": "^2.2.1",
     "ts-loader": "^8.0.14",

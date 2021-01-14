@@ -1,15 +1,24 @@
-/* eslint-disable no-process-env -- This is the config file :) */
+/* eslint-disable no-process-env -- This is the config file */
+// spell-checker: words cosmiconfig
 
-declare let process: {
-  env: {
-    AUTH0_DOMAIN: string;
-    AUTH0_CLIENT_ID: string;
-    AUTH0_AUDIENCE: string;
-  };
+import { cosmiconfigSync } from "cosmiconfig";
+
+export interface GlobalConfig {
+  HUNDREDPOINTS_ORIGIN: string;
+}
+
+const defaults: Partial<GlobalConfig> = {
+  HUNDREDPOINTS_ORIGIN:
+    process.env.HUNDREDPOINTS_ORIGIN || "https://app.hundredpoints.io",
 };
 
-export default {
-  AUTH0_DOMAIN: process.env.AUTH0_DOMAIN,
-  AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID,
-  AUTH0_AUDIENCE: process.env.AUTH0_AUDIENCE,
-};
+const explorerSync = cosmiconfigSync("hundredpoints");
+const result = explorerSync.search(
+  process.env.HUNDREDPOINTS_INTEGRATION_CWD || process.cwd()
+);
+
+const config: GlobalConfig = result?.isEmpty
+  ? defaults
+  : { ...defaults, ...result?.config };
+
+export default config;

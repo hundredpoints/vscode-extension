@@ -1,19 +1,21 @@
 import vscode, { ExtensionContext } from "vscode";
 
-import fetch from "node-fetch";
-import authenticate, { AuthenticateOptions } from "./features/authentication";
+import authenticate from "./features/authentication";
 
 import { registerCommands } from "./commands";
 
 /** Features */
-import TimesheetExtension from "./features/timesheet";
+import TimesheetFeature from "./features/timesheet";
+import output from "./output";
 
 /**
  * Singleton Class for the HundredPoints Extension
  */
 export class Hundredpoints {
+  static current: Hundredpoints | undefined;
   private context: ExtensionContext;
-  private timesheet: TimesheetExtension;
+
+  private timesheet: TimesheetFeature;
 
   private accessToken: string | undefined;
 
@@ -28,9 +30,7 @@ export class Hundredpoints {
    */
   static create(context: ExtensionContext): void {
     Hundredpoints.current = new Hundredpoints(context);
-    Hundredpoints.current.activate();
   }
-  static current: Hundredpoints | undefined;
 
   /**
    * Private constructor to ensure class must be created through the static create function
@@ -39,48 +39,30 @@ export class Hundredpoints {
   private constructor(context: ExtensionContext) {
     this.context = context;
 
-    const request = this.request.bind(this);
+    output.appendLine("Initializing");
 
-    this.statusBar.text = "$(clock) HundredPoints Initializing...";
-    this.statusBar.show();
-
-    /**
-     * Setup the sub-extensions
-     */
-    this.timesheet = new TimesheetExtension({ request });
-  }
-
-  /**
-   * Entry function for VSCode extension
-   *
-   * Start the authentication and perform any registration tasks
-   *
-   * DO NOT activate the sub-extensions here. Wait for authentication
-   */
-  public activate(): void {
-    this.authenticate();
     registerCommands(this);
-    this.timesheet.register(this.context);
+    this.timesheet = new TimesheetFeature(this);
 
-    this.statusBar.text = "$(clock)";
-    this.statusBar.tooltip = "Hundredpoints: Initialized";
-  }
+    output.appendLine("Initialized");
 
-  /**
-   * Exit function for VSCode extension
-   *
-   * Make sure we logout and deactivate the sub-extensions
-   */
-  public deactivate(): void {
-    this.logout();
-    this.timesheet.deactivate();
+    this.authenticate();
   }
 
   public getContext(): ExtensionContext {
     return this.context;
   }
 
+  public getAccessToken(): string {
+    if (!this.accessToken) {
+      throw new Error("Attempted to get access token while logged out");
+    }
+
+    return this.accessToken;
+  }
+
   private activateExtensions(): void {
+    output.appendLine("Activating extensions");
     this.timesheet.activate();
   }
 
@@ -93,51 +75,23 @@ export class Hundredpoints {
     this.deactivateExtensions();
   }
 
-  public async authenticate(options: AuthenticateOptions = {}): Promise<void> {
-    const response = await authenticate(options);
+  public async authenticate(): Promise<void> {
+    try {
+      output.appendLine("Checking authentication");
+      const response = await authenticate();
 
-    if (!response) {
-      console.log("Not authenticated");
-      this.statusBar.tooltip = "Hundredpoints: Initialized. Not authenticated.";
-      return;
+      console.log(response);
+
+      if (!response) {
+        return;
+      }
+
+      this.accessToken = response.token;
+      this.activateExtensions();
+      this.statusBar.hide();
+    } catch (error) {
+      output.appendLine(`Error: ${error.message}`);
     }
-
-    this.statusBar.tooltip = "Hundredpoints: Initialized. Authenticated.";
-
-    this.accessToken = response.token;
-    this.accessToken ? this.activateExtensions() : this.logout();
-
-    this.statusBar.hide();
-  }
-
-  private async request<D, V = unknown>({
-    query,
-    variables,
-    method = "get",
-  }: {
-    query: string;
-    method?: string;
-    variables?: V;
-  }): Promise<D> {
-    const response = await fetch("http://localhost:3000/api/graphql", {
-      method,
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        authorization: `Bearer ${this.accessToken}`,
-      },
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
-    });
-
-    // Should handle some global errors here
-    if (!response.ok) {
-      throw response;
-    }
-
-    return response.json();
   }
 }
 
@@ -152,9 +106,7 @@ export function activate(context: ExtensionContext): void {
 
 /**
  * Exit function for VSCode extensions.
- *
- * @param context - The current VSCode Extension Context
  */
 export function deactivate(): void {
-  Hundredpoints.current?.deactivate();
+  Hundredpoints.current?.logout();
 }

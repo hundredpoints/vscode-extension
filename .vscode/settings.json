@@ -25,6 +25,7 @@
     "treeish",
     "tsdoc",
     "unshallow",
-    "webviews"
+    "webviews",
+    "xvfb"
   ]
 }

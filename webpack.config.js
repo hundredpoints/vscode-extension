@@ -3,8 +3,8 @@
 
 "use strict";
 
+// eslint-disable-next-line no-undef -- CommonJS module
 const path = require("path");
-const Dotenv = require("dotenv-webpack");
 
 /**@type {import('webpack').Configuration}*/
 const extensionConfig = {
@@ -12,7 +12,7 @@ const extensionConfig = {
 
   entry: "./src/extension.ts",
   output: {
-    // eslint-disable-next-line no-undef -- webpack already defines this
+    // eslint-disable-next-line no-undef -- NodeJS module
     path: path.resolve(__dirname, "dist"),
     filename: "extension.js",
     libraryTarget: "commonjs2",
@@ -25,7 +25,7 @@ const extensionConfig = {
   resolve: {
     extensions: [".ts", ".tsx", ".js"],
   },
-  plugins: [new Dotenv()],
+  plugins: [],
   module: {
     rules: [
       {

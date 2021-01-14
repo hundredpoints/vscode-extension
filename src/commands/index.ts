@@ -8,16 +8,14 @@ export function registerCommands(extension: Hundredpoints): void {
 
   function registerCommand(
     command: string,
-    commandHandler: (...args: unknown[]) => unknown
+    commandHandler: (...arguments_: unknown[]) => unknown
   ): void {
     context.subscriptions.push(
       commands.registerCommand(command, commandHandler)
     );
   }
 
-  registerCommand("hundredpoints.login", () =>
-    extension.authenticate({ showInitialPrompt: false })
-  );
+  registerCommand("hundredpoints.login", () => extension.authenticate());
   registerCommand("hundredpoints.logout", () => extension.logout());
 
   registerCommand("hundredpoints.clearCredentials", () =>

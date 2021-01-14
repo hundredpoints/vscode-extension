@@ -12,7 +12,10 @@
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-      "preLaunchTask": "npm: webpack"
+      "preLaunchTask": "npm: webpack",
+      "env": {
+        "HUNDREDPOINTS_INTEGRATION_CWD": "${workspaceFolder}"
+      }
     },
     {
       "name": "Extension Tests",

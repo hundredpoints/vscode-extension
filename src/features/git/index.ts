@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { isAbsolute } from "path";
+import path from "path";
 import pathIsInside from "path-is-inside";
 
 import { API as GitAPI, Repository } from "../../@types/git";
@@ -19,7 +19,7 @@ export function findFileRepository(fileName: string): Repository | undefined {
     return pathIsInside(fileName, repo.rootUri.fsPath);
   });
 
-  return matches.find(({ rootUri }) => isAbsolute(rootUri.fsPath));
+  return matches.find(({ rootUri }) => path.isAbsolute(rootUri.fsPath));
 }
 
 export function getRepositoryRemote(

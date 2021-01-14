@@ -1,15 +1,19 @@
 import vscode, { ExtensionContext, Disposable } from "vscode";
 
 import { getFileInfo } from "../git";
-import { Hundredpoints } from "src/extension";
 import prettyMilliseconds from "pretty-ms";
+import { activity } from "@hundredpoints/cli";
+import { Hundredpoints } from "src/extension";
+import output from "../../output";
 
-interface TimesheetExtensionConstructor {
-  request: Hundredpoints["request"];
+function log(line: string): void {
+  output.appendLine(`[Timesheet] ${line}`);
 }
 
-export default class TimesheetExtension {
+export default class TimesheetFeature {
   private active = false;
+  private parent: Hundredpoints;
+  private context: ExtensionContext;
 
   private lastFileName: string | undefined = undefined;
   private lastEventTimestamp = 0;
@@ -25,14 +29,11 @@ export default class TimesheetExtension {
     vscode.StatusBarAlignment.Left
   );
 
-  private request: Hundredpoints["request"];
+  constructor(parent: Hundredpoints) {
+    this.parent = parent;
+    this.context = parent.getContext();
 
-  constructor({ request }: TimesheetExtensionConstructor) {
-    this.request = request;
-  }
-
-  public register(context: ExtensionContext): void {
-    console.log("Registering timesheet Extension");
+    output.appendLine("Initializing timesheet extension");
     const subscriptions: Disposable[] = [];
 
     vscode.window.onDidChangeTextEditorSelection(
@@ -47,14 +48,12 @@ export default class TimesheetExtension {
     );
 
     // Make sure we clean up all subscriptions
-    context.subscriptions.push(Disposable.from(...subscriptions));
+    this.context.subscriptions.push(Disposable.from(...subscriptions));
   }
 
   public activate(): void {
+    log("Active");
     this.active = true;
-    this.statusBar.text = "$(debug-pause)";
-    this.statusBar.tooltip = "HundredPoints: Waiting for activity";
-    this.statusBar.show();
   }
 
   public deactivate(): void {
@@ -77,41 +76,46 @@ export default class TimesheetExtension {
     this.statusBar.text = `$(play) ${displayTime}`;
   }
 
-  private handleIdle(): void {
+  private clearActivity(): void {
+    log("Clearing activity");
     this.statusBar.text = "$(debug-pause)";
     this.playStart = 0;
+    this.lastFileName = undefined;
     clearInterval(this.updateDisplayTimeout);
   }
 
   private handleOnActivity(): void {
-    // Ignore everything until we are active
     if (!this.active) {
-      return;
+      return this.clearActivity();
     }
 
-    const fileName = vscode.window.activeTextEditor?.document?.fileName;
+    const file = vscode.window.activeTextEditor?.document?.fileName;
 
-    if (!fileName) {
-      return;
+    if (!file) {
+      return this.clearActivity();
+    }
+
+    if (!vscode.window.state.focused) {
+      return this.clearActivity();
     }
 
     if (this.idleTimeout) {
       clearTimeout(this.idleTimeout);
     }
 
-    this.idleTimeout = setTimeout(() => this.handleIdle(), this.idleLimit);
+    this.idleTimeout = setTimeout(() => this.clearActivity(), this.idleLimit);
 
     const timestamp = Date.now();
     const timeToWaitBetweenUpdates = 2 * 60 * 1000;
     const hasEnoughTimePassed =
       this.lastEventTimestamp + timeToWaitBetweenUpdates < timestamp;
 
-    if (fileName === this.lastFileName && !hasEnoughTimePassed) {
+    if (file === this.lastFileName && !hasEnoughTimePassed) {
       return;
     }
 
-    if (fileName !== this.lastFileName) {
-      this.lastFileName = fileName;
+    if (file !== this.lastFileName) {
+      this.lastFileName = file;
       this.playStart = timestamp;
       clearInterval(this.updateDisplayTimeout);
       this.updateStatusBar();
@@ -122,35 +126,16 @@ export default class TimesheetExtension {
     }
 
     this.lastEventTimestamp = timestamp;
-    this.sendActivityTimesheetEvent(fileName);
-  }
+    const token = this.parent.getAccessToken();
+    const { remoteUrl } = getFileInfo(file);
 
-  async sendActivityTimesheetEvent(filename: string): Promise<void> {
-    const { remoteUrl } = getFileInfo(filename);
+    log(`Handle activity for ${file}`);
 
-    console.log("Sending event", remoteUrl, filename);
-
-    const response = await this.request({
-      method: "post",
-      query: `mutation CreateActivityEvent($input: CreateIntegrationActivityEventInput!) {
-        createIntegrationActivityEvent(input: $input) {
-          code
-          error
-          message
-          activityEvent {
-            id
-          }
-        }
-      }`,
-      variables: {
-        input: {
-          remoteUrl,
-          filename,
-          startDateTime: new Date(),
-        },
-      },
+    activity({
+      token,
+      remoteUrl,
+      file,
+      startDateTime: new Date(),
     });
-
-    console.log(response);
   }
 }

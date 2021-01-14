@@ -1,57 +1,93 @@
-import vscode, { Uri } from "vscode";
-import { Session } from "./authenticate";
-import getMe from "./get-me";
+import vscode, { ProgressLocation, Uri } from "vscode";
+import { me as getMe } from "@hundredpoints/cli";
 
 import { saveCredentials } from "./store";
+import { Session } from ".";
+import config from "../../config";
+import output from "../../output";
 
 const GET_ACCESS_TOKEN = "Get access token";
 const ENTER_ACCESS_TOKEN = "Enter access token";
 
-export default async function unauthenticatedFlow(
-  showInitialPrompt = true
-): Promise<Session | undefined> {
-  if (showInitialPrompt) {
-    const maybeSignIn = await vscode.window.showInformationMessage(
-      "No access token found for HundredPoints.",
-      GET_ACCESS_TOKEN,
-      ENTER_ACCESS_TOKEN
-    );
+const { HUNDREDPOINTS_ORIGIN: APP_ORIGIN } = config;
 
-    if (maybeSignIn === GET_ACCESS_TOKEN) {
-      await vscode.env.openExternal(
-        Uri.parse("http://localhost:3000/integrations/access-tokens")
-      );
-    }
-  }
+export default async function unauthenticatedFlow(): Promise<
+  Session | undefined
+> {
+  const maybeSignIn = await vscode.window.showInformationMessage(
+    "No access token found for HundredPoints.",
+    GET_ACCESS_TOKEN,
+    ENTER_ACCESS_TOKEN
+  );
 
-  const accessToken = await vscode.window.showInputBox({
-    prompt: "Enter your HundredPoints access-token here.",
-  });
-
-  if (!accessToken) {
+  if (!maybeSignIn) {
+    output.appendLine("User canceled authentication");
     return;
   }
 
-  try {
-    const {
-      data: { me },
-    } = await getMe(accessToken);
-    console.log("Saving credentials");
+  return vscode.window.withProgress<Session | undefined>(
+    {
+      location: ProgressLocation.Notification,
+      title:
+        "Opening your browser, please follow the instructions and then return to VS Code",
+      cancellable: true,
+    },
+    async (progress, cancellationToken): Promise<Session | undefined> => {
+      cancellationToken.onCancellationRequested(() => {
+        output.appendLine("User cancelled authentication");
+      });
 
-    await saveCredentials(me.profile.id, accessToken);
+      if (maybeSignIn === GET_ACCESS_TOKEN) {
+        await vscode.env.openExternal(
+          Uri.parse(`${APP_ORIGIN}/integrations/auth/visual-studio-code`)
+        );
+      }
 
-    console.log(`Successfully authenticated`);
-    vscode.window.showInformationMessage(
-      `Successfully authenticated as ${me.profile.name}`
-    );
+      const accessToken = await vscode.window.showInputBox(
+        {
+          prompt: "Enter your HundredPoints access token here.",
+          ignoreFocusOut: true,
+        },
+        cancellationToken
+      );
 
-    return {
-      token: accessToken,
-      user: me,
-      profile: me.profile,
-    };
-  } catch (error) {
-    vscode.window.showErrorMessage(error.message);
-    throw error;
-  }
+      if (!accessToken) {
+        return;
+      }
+
+      try {
+        progress.report({ increment: 30, message: "Validating" });
+
+        const me = await getMe({ token: accessToken });
+
+        if (cancellationToken.isCancellationRequested) {
+          return;
+        }
+
+        progress.report({
+          increment: 30,
+          message: "Successfully authenticated",
+        });
+
+        await saveCredentials(me.profile.id, accessToken);
+
+        progress.report({
+          increment: 30,
+          message: `Successfully authenticated as ${me.profile.name}`,
+        });
+
+        return {
+          token: accessToken,
+          user: me,
+          profile: me.profile,
+        };
+      } catch (error) {
+        output.appendLine(
+          `Authentication error: ${error.response.errors[0].message}`
+        );
+        vscode.window.showErrorMessage(error.response.errors[0].message);
+        return;
+      }
+    }
+  );
 }

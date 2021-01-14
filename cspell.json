@@ -1,0 +1,20 @@
+{
+  "version": "0.1",
+  "language": "en",
+  "words": [
+      "hundredpoints",
+      "hundredpointsrc"
+  ],
+  "flagWords": [],
+  "ignorePaths": [
+      "cspell.json",
+      ".env",
+      ".graphql-let.yml",
+      "babel.config.js",
+      "node_modules/**",
+      "package-lock.json",
+      "package.json",
+      "src/sdk/__generated__.ts",
+      "tsconfig.json"
+  ]
+}
