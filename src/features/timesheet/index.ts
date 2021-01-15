@@ -5,6 +5,7 @@ import prettyMilliseconds from "pretty-ms";
 import { activity } from "@hundredpoints/cli";
 import { Hundredpoints } from "src/extension";
 import output from "../../output";
+import { ActivityEventSource } from "@hundredpoints/cli/dist/sdk";
 
 function log(line: string): void {
   output.appendLine(`[Timesheet] ${line}`);
@@ -86,7 +87,7 @@ export default class TimesheetFeature {
 
   private handleOnActivity(): void {
     if (!this.active) {
-      return this.clearActivity();
+      return;
     }
 
     const file = vscode.window.activeTextEditor?.document?.fileName;
@@ -135,6 +136,7 @@ export default class TimesheetFeature {
       token,
       remoteUrl,
       file,
+      source: ActivityEventSource.VisualStudioCode,
       startDateTime: new Date(),
     });
   }
