@@ -10,6 +10,8 @@ function log(line: string): void {
   output.appendLine(`[Timesheet] ${line}`);
 }
 
+const fileBlacklist = [/^extension-output/];
+
 export default class TimesheetFeature {
   private active = false;
   private parent: Hundredpoints;
@@ -123,6 +125,11 @@ export default class TimesheetFeature {
         () => this.updateStatusBar(),
         this.updateDisplayInterval
       );
+    }
+
+    if (fileBlacklist.some((regex) => regex.test(file))) {
+      log("Skipping blacklisted file");
+      return;
     }
 
     this.lastEventTimestamp = timestamp;
