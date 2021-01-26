@@ -95,7 +95,7 @@ export class Hundredpoints {
 
       this.client = getClient({
         token: this.accessToken,
-        url: config.HUNDREDPOINTS_ORIGIN,
+        url: config.HUNDREDPOINTS_API,
       });
 
       this.activateExtensions();

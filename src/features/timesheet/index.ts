@@ -142,6 +142,7 @@ export default class TimesheetFeature {
         input: {
           remoteUrl,
           source: ActivityEventSource.VisualStudioCode,
+          isHeartbeat: true,
           startDateTime: new Date(),
         },
       });
