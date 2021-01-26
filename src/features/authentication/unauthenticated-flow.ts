@@ -9,7 +9,7 @@ import output from "../../output";
 const GET_ACCESS_TOKEN = "Get access token";
 const ENTER_ACCESS_TOKEN = "Enter access token";
 
-const { HUNDREDPOINTS_ORIGIN } = config;
+const { HUNDREDPOINTS_ORIGIN, HUNDREDPOINTS_API } = config;
 
 export default async function unauthenticatedFlow(): Promise<
   Session | undefined
@@ -38,6 +38,7 @@ export default async function unauthenticatedFlow(): Promise<
       });
 
       if (maybeSignIn === GET_ACCESS_TOKEN) {
+        output.appendLine("Opening browser for new access token");
         await vscode.env.openExternal(
           Uri.parse(
             `${HUNDREDPOINTS_ORIGIN}/integrations/auth/visual-studio-code`
@@ -45,6 +46,7 @@ export default async function unauthenticatedFlow(): Promise<
         );
       }
 
+      output.appendLine("Waiting for user to enter access token");
       const accessToken = await vscode.window.showInputBox(
         {
           prompt: "Enter your HundredPoints access token here.",
@@ -54,27 +56,34 @@ export default async function unauthenticatedFlow(): Promise<
       );
 
       if (!accessToken) {
+        output.appendLine("No access token was entered, aborting");
         return;
       }
 
       try {
+        output.appendLine("Validating access token");
         progress.report({ increment: 30, message: "Validating" });
 
         const { me } = await getClient({
           token: accessToken,
-          url: HUNDREDPOINTS_ORIGIN,
+          url: HUNDREDPOINTS_API,
         }).me();
 
         if (cancellationToken.isCancellationRequested) {
+          output.appendLine("User cancelled authentication, aborting");
           return;
         }
 
+        output.appendLine(`Successfully authenticated as ${me.profile.name}`);
+
         progress.report({
           increment: 30,
-          message: "Successfully authenticated",
+          message: "Successfully authenticated, saving credentials",
         });
 
         await saveCredentials(me.profile.id, accessToken);
+
+        output.appendLine(`Successfully saved credentials`);
 
         progress.report({
           increment: 30,
@@ -87,6 +96,10 @@ export default async function unauthenticatedFlow(): Promise<
           profile: me.profile,
         };
       } catch (error) {
+        output.appendLine("seomthi");
+        console.log(error);
+        output.appendLine(error);
+
         output.appendLine(
           `Authentication error: ${error.response.errors[0].message}`
         );

@@ -5,11 +5,15 @@ import { cosmiconfigSync } from "cosmiconfig";
 
 export interface GlobalConfig {
   HUNDREDPOINTS_ORIGIN: string;
+  HUNDREDPOINTS_API: string;
 }
 
+const origin =
+  process.env.HUNDREDPOINTS_ORIGIN || "https://app.hundredpoints.io";
+
 const defaults: Partial<GlobalConfig> = {
-  HUNDREDPOINTS_ORIGIN:
-    process.env.HUNDREDPOINTS_ORIGIN || "https://app.hundredpoints.io",
+  HUNDREDPOINTS_ORIGIN: origin,
+  HUNDREDPOINTS_API: `${origin}/api/graphql`,
 };
 
 const explorerSync = cosmiconfigSync("hundredpoints");

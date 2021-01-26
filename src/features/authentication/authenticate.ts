@@ -15,6 +15,7 @@ export default async function authenticate(): Promise<Session | undefined> {
     output.appendLine(`Found ${credentialArray.length} sets of credentials`);
 
     if (credentialArray.length === 0) {
+      output.appendLine(`Starting unauthenticatedFlow`);
       return unauthenticatedFlow();
     }
 
@@ -27,7 +28,7 @@ export default async function authenticate(): Promise<Session | undefined> {
         try {
           const { me } = await getClient({
             token,
-            url: config.HUNDREDPOINTS_ORIGIN,
+            url: config.HUNDREDPOINTS_API,
           }).me();
 
           const session: Session = {
