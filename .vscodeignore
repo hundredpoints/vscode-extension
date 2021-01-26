@@ -1,5 +1,8 @@
-# Ignore everything (folders and files) on root only
-/*
-
-!.vscode
-!dist/
+*
+*/**
+**/.DS_Store
+!dist/*
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE.txt
