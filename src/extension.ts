@@ -18,7 +18,7 @@ export class Hundredpoints {
   static current: Hundredpoints | undefined;
   private context: ExtensionContext;
 
-  public client: Sdk | undefined;
+  private client: Sdk | undefined;
 
   private timesheet: TimesheetFeature;
 
@@ -58,12 +58,12 @@ export class Hundredpoints {
     return this.context;
   }
 
-  public getAccessToken(): string {
-    if (!this.accessToken) {
-      throw new Error("Attempted to get access token while logged out");
+  public getClient(): Sdk {
+    if (!this.client) {
+      throw new Error("Attempted to get API client while logged out");
     }
 
-    return this.accessToken;
+    return this.client;
   }
 
   private activateExtensions(): void {
@@ -85,11 +85,11 @@ export class Hundredpoints {
       output.appendLine("Checking authentication");
       const response = await authenticate();
 
-      console.log(response);
-
       if (!response) {
         return;
       }
+
+      output.appendLine("Successfully authenticated");
 
       this.accessToken = response.token;
 

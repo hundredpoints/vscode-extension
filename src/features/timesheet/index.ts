@@ -86,7 +86,7 @@ export default class TimesheetFeature {
     clearInterval(this.updateDisplayTimeout);
   }
 
-  private handleOnActivity(): void {
+  private async handleOnActivity(): Promise<void> {
     if (!this.active) {
       return;
     }
@@ -137,12 +137,19 @@ export default class TimesheetFeature {
 
     log(`Handle activity for ${file}`);
 
-    this.parent.client?.createIntegrationActivityEvent({
-      input: {
-        remoteUrl,
-        source: ActivityEventSource.VisualStudioCode,
-        startDateTime: new Date(),
-      },
-    });
+    try {
+      await this.parent.getClient().createIntegrationActivityEvent({
+        input: {
+          remoteUrl,
+          source: ActivityEventSource.VisualStudioCode,
+          startDateTime: new Date(),
+        },
+      });
+
+      log(`Successfully created activity event for ${file}`);
+    } catch (error) {
+      console.error(error);
+      vscode.window.showErrorMessage("Error when saving timesheet data");
+    }
   }
 }
