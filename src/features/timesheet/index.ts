@@ -2,10 +2,9 @@ import vscode, { ExtensionContext, Disposable } from "vscode";
 
 import { getFileInfo } from "../git";
 import prettyMilliseconds from "pretty-ms";
-import { activity } from "@hundredpoints/cli";
+import { ActivityEventSource } from "@hundredpoints/cli";
 import { Hundredpoints } from "src/extension";
 import output from "../../output";
-import { ActivityEventSource } from "@hundredpoints/cli/dist/sdk";
 
 function log(line: string): void {
   output.appendLine(`[Timesheet] ${line}`);
@@ -127,17 +126,16 @@ export default class TimesheetFeature {
     }
 
     this.lastEventTimestamp = timestamp;
-    const token = this.parent.getAccessToken();
     const { remoteUrl } = getFileInfo(file);
 
     log(`Handle activity for ${file}`);
 
-    activity({
-      token,
-      remoteUrl,
-      file,
-      source: ActivityEventSource.VisualStudioCode,
-      startDateTime: new Date(),
+    this.parent.client?.createIntegrationActivityEvent({
+      input: {
+        remoteUrl,
+        source: ActivityEventSource.VisualStudioCode,
+        startDateTime: new Date(),
+      },
     });
   }
 }

@@ -1,5 +1,5 @@
 import vscode, { ProgressLocation, Uri } from "vscode";
-import { me as getMe } from "@hundredpoints/cli";
+import getClient from "@hundredpoints/cli";
 
 import { saveCredentials } from "./store";
 import { Session } from ".";
@@ -9,7 +9,7 @@ import output from "../../output";
 const GET_ACCESS_TOKEN = "Get access token";
 const ENTER_ACCESS_TOKEN = "Enter access token";
 
-const { HUNDREDPOINTS_ORIGIN: APP_ORIGIN } = config;
+const { HUNDREDPOINTS_ORIGIN } = config;
 
 export default async function unauthenticatedFlow(): Promise<
   Session | undefined
@@ -39,7 +39,9 @@ export default async function unauthenticatedFlow(): Promise<
 
       if (maybeSignIn === GET_ACCESS_TOKEN) {
         await vscode.env.openExternal(
-          Uri.parse(`${APP_ORIGIN}/integrations/auth/visual-studio-code`)
+          Uri.parse(
+            `${HUNDREDPOINTS_ORIGIN}/integrations/auth/visual-studio-code`
+          )
         );
       }
 
@@ -58,7 +60,10 @@ export default async function unauthenticatedFlow(): Promise<
       try {
         progress.report({ increment: 30, message: "Validating" });
 
-        const me = await getMe({ token: accessToken });
+        const { me } = await getClient({
+          token: accessToken,
+          url: HUNDREDPOINTS_ORIGIN,
+        }).me();
 
         if (cancellationToken.isCancellationRequested) {
           return;

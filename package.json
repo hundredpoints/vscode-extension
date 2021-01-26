@@ -71,7 +71,7 @@
     "webpack-cli": "^4.4.0"
   },
   "dependencies": {
-    "@hundredpoints/cli": "0.1.0",
+    "@hundredpoints/cli": "0.3.1",
     "keytar": "^7.3.0",
     "path-is-inside": "^1.0.2",
     "pretty-ms": "^7.0.1",

@@ -1,11 +1,12 @@
 import vscode from "vscode";
-import { me as getMe } from "@hundredpoints/cli";
+import getClient from "@hundredpoints/cli";
 
 import { Session } from ".";
 
 import { deleteCredential, getCredentials } from "./store";
 import unauthenticatedFlow from "./unauthenticated-flow";
 import output from "../../output";
+import config from "../../config";
 
 export default async function authenticate(): Promise<Session | undefined> {
   try {
@@ -19,8 +20,16 @@ export default async function authenticate(): Promise<Session | undefined> {
 
     const credentialTests = await Promise.all(
       credentialArray.map(async ({ token, account }) => {
+        if (!token) {
+          return;
+        }
+
         try {
-          const me = await getMe({ token });
+          const { me } = await getClient({
+            token,
+            url: config.HUNDREDPOINTS_ORIGIN,
+          }).me();
+
           const session: Session = {
             token,
             user: me,

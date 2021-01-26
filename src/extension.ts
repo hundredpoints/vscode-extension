@@ -4,9 +4,12 @@ import authenticate from "./features/authentication";
 
 import { registerCommands } from "./commands";
 
+import getClient, { Sdk } from "@hundredpoints/cli";
+
 /** Features */
 import TimesheetFeature from "./features/timesheet";
 import output from "./output";
+import config from "./config";
 
 /**
  * Singleton Class for the HundredPoints Extension
@@ -14,6 +17,8 @@ import output from "./output";
 export class Hundredpoints {
   static current: Hundredpoints | undefined;
   private context: ExtensionContext;
+
+  public client: Sdk | undefined;
 
   private timesheet: TimesheetFeature;
 
@@ -87,6 +92,12 @@ export class Hundredpoints {
       }
 
       this.accessToken = response.token;
+
+      this.client = getClient({
+        token: this.accessToken,
+        url: config.HUNDREDPOINTS_ORIGIN,
+      });
+
       this.activateExtensions();
       this.statusBar.hide();
     } catch (error) {
