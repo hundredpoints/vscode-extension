@@ -140,7 +140,7 @@ export default class TimesheetFeature {
     try {
       await this.parent.getClient().createIntegrationActivityEvent({
         input: {
-          remoteUrl,
+          gitRemoteUrl: remoteUrl,
           source: ActivityEventSource.VisualStudioCode,
           isHeartbeat: true,
           startDateTime: new Date(),
