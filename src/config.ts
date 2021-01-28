@@ -8,18 +8,20 @@ export interface GlobalConfig {
   HUNDREDPOINTS_API: string;
 }
 
+const explorerSync = cosmiconfigSync("hundredpoints");
+const result = explorerSync.search(
+  process.env.HUNDREDPOINTS_INTEGRATION_CWD || process.cwd()
+);
+
 const origin =
-  process.env.HUNDREDPOINTS_ORIGIN || "https://app.hundredpoints.io";
+  result?.config.HUNDREDPOINTS_ORIGIN ||
+  process.env.HUNDREDPOINTS_ORIGIN ||
+  "https://app.hundredpoints.io";
 
 const defaults: Partial<GlobalConfig> = {
   HUNDREDPOINTS_ORIGIN: origin,
   HUNDREDPOINTS_API: `${origin}/api/graphql`,
 };
-
-const explorerSync = cosmiconfigSync("hundredpoints");
-const result = explorerSync.search(
-  process.env.HUNDREDPOINTS_INTEGRATION_CWD || process.cwd()
-);
 
 const config: GlobalConfig = result?.isEmpty
   ? defaults
