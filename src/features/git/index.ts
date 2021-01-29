@@ -14,18 +14,22 @@ function getVSCodeGit(): GitAPI {
 }
 
 export function findFileRepository(fileName: string): Repository | undefined {
-  const git = getVSCodeGit();
-  const matches = git.repositories.filter((repo) => {
+  return getVSCodeGit().repositories.find((repo) => {
     return pathIsInside(fileName, repo.rootUri.fsPath);
   });
-
-  return matches.find(({ rootUri }) => path.isAbsolute(rootUri.fsPath));
 }
 
 export function getRepositoryRemote(
   repository: Repository
 ): string | undefined {
   return repository.state.HEAD?.remote || repository.state.remotes[0].fetchUrl;
+}
+
+export function getRelativeFilename(
+  filename: string,
+  repository: Repository
+): string {
+  return path.relative(repository.rootUri.fsPath, filename);
 }
 
 export function getFileInfo(fileName: string): FileInfo {

@@ -1,10 +1,14 @@
 import vscode, { ExtensionContext, Disposable } from "vscode";
 
-import { getFileInfo } from "../git";
 import prettyMilliseconds from "pretty-ms";
 import { ActivityEventSource } from "@hundredpoints/cli";
 import { Hundredpoints } from "src/extension";
 import output from "../../output";
+import {
+  findFileRepository,
+  getRelativeFilename,
+  getRepositoryRemote,
+} from "../git";
 
 function log(line: string): void {
   output.appendLine(`[Timesheet] ${line}`);
@@ -35,7 +39,7 @@ export default class TimesheetFeature {
     this.parent = parent;
     this.context = parent.getContext();
 
-    output.appendLine("Initializing timesheet extension");
+    log("Initializing timesheet extension");
     const subscriptions: Disposable[] = [];
 
     vscode.window.onDidChangeTextEditorSelection(
@@ -79,7 +83,6 @@ export default class TimesheetFeature {
   }
 
   private clearActivity(): void {
-    log("Clearing activity");
     this.statusBar.text = "$(debug-pause)";
     this.playStart = 0;
     this.lastFileName = undefined;
@@ -91,13 +94,15 @@ export default class TimesheetFeature {
       return;
     }
 
-    const file = vscode.window.activeTextEditor?.document?.fileName;
+    let filename = vscode.window.activeTextEditor?.document?.fileName;
 
-    if (!file) {
+    if (!filename) {
+      log("No active file");
       return this.clearActivity();
     }
 
     if (!vscode.window.state.focused) {
+      log("Window has lost focus");
       return this.clearActivity();
     }
 
@@ -105,19 +110,22 @@ export default class TimesheetFeature {
       clearTimeout(this.idleTimeout);
     }
 
-    this.idleTimeout = setTimeout(() => this.clearActivity(), this.idleLimit);
+    this.idleTimeout = setTimeout(() => {
+      log("Idle limit reached");
+      this.clearActivity();
+    }, this.idleLimit);
 
     const timestamp = Date.now();
     const timeToWaitBetweenUpdates = 2 * 60 * 1000;
     const hasEnoughTimePassed =
       this.lastEventTimestamp + timeToWaitBetweenUpdates < timestamp;
 
-    if (file === this.lastFileName && !hasEnoughTimePassed) {
+    if (filename === this.lastFileName && !hasEnoughTimePassed) {
       return;
     }
 
-    if (file !== this.lastFileName) {
-      this.lastFileName = file;
+    if (filename !== this.lastFileName) {
+      this.lastFileName = filename;
       this.playStart = timestamp;
       clearInterval(this.updateDisplayTimeout);
       this.updateStatusBar();
@@ -127,27 +135,35 @@ export default class TimesheetFeature {
       );
     }
 
-    if (fileBlacklist.some((regex) => regex.test(file))) {
+    if (fileBlacklist.some((regex) => filename && regex.test(filename))) {
       log("Skipping blacklisted file");
       return;
     }
 
     this.lastEventTimestamp = timestamp;
-    const { remoteUrl } = getFileInfo(file);
+    log(`Handle activity for ${filename}`);
 
-    log(`Handle activity for ${file}`);
+    const repository = findFileRepository(filename);
+
+    let gitRemoteUrl;
+
+    if (repository) {
+      filename = getRelativeFilename(filename, repository);
+      gitRemoteUrl = getRepositoryRemote(repository);
+    }
 
     try {
-      await this.parent.getClient().createIntegrationActivityEvent({
+      await this.parent.getClient().createActivityEvent({
         input: {
-          gitRemoteUrl: remoteUrl,
+          filename,
           source: ActivityEventSource.VisualStudioCode,
           isHeartbeat: true,
           startDateTime: new Date(),
+          gitRemoteUrl,
         },
       });
 
-      log(`Successfully created activity event for ${file}`);
+      log(`Successfully created activity event for ${filename}`);
     } catch (error) {
       console.error(error);
       vscode.window.showErrorMessage("Error when saving timesheet data");
