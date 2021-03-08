@@ -14,6 +14,10 @@ function log(line: string): void {
   output.appendLine(`[Timesheet] ${line}`);
 }
 
+function logError(line: string): void {
+  output.appendLine(`[Timesheet] [⚠] ${line}`);
+}
+
 const fileBlacklist = [/^extension-output/];
 
 export default class TimesheetFeature {
@@ -165,8 +169,8 @@ export default class TimesheetFeature {
 
       log(`Successfully created activity event for ${filename}`);
     } catch (error) {
-      console.error(error);
       vscode.window.showErrorMessage("Error when saving timesheet data");
+      logError(error.response.errors[0].message);
     }
   }
 }

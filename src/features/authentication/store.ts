@@ -28,7 +28,7 @@ function getNodeModule<T>(moduleName: string): T | undefined {
   return undefined;
 }
 
-const keytar = getNodeModule<typeof keytarType>("keytar")!;
+const keytar: typeof keytarType = getNodeModule<typeof keytarType>("keytar")!;
 
 export const PASSWORD_SERVICE_SUFFIX = "/integration/visual-studio-code";
 
