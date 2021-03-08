@@ -10,6 +10,7 @@ import getClient, { Sdk } from "@hundredpoints/cli";
 import TimesheetFeature from "./features/timesheet";
 import output from "./output";
 import config from "./config";
+import { deleteCredential } from "./features/authentication/store";
 
 /**
  * Singleton Class for the HundredPoints Extension
@@ -23,6 +24,7 @@ export class Hundredpoints {
   private timesheet: TimesheetFeature;
 
   private accessToken: string | undefined;
+  private profileId: string | undefined;
 
   private statusBar: vscode.StatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left
@@ -66,17 +68,12 @@ export class Hundredpoints {
     return this.client;
   }
 
-  private activateExtensions(): void {
-    output.appendLine("Activating extensions");
-    this.timesheet.activate();
-  }
-
-  private deactivateExtensions(): void {
-    this.timesheet.deactivate();
-  }
-
   public logout(): void {
+    if (this.profileId) {
+      deleteCredential(config.HUNDREDPOINTS_ORIGIN, this.profileId);
+    }
     this.accessToken = undefined;
+    this.profileId = undefined;
     this.deactivateExtensions();
   }
 
@@ -92,6 +89,7 @@ export class Hundredpoints {
       output.appendLine("Successfully authenticated");
 
       this.accessToken = response.token;
+      this.profileId = response.profile.id;
 
       this.client = getClient({
         token: this.accessToken,
@@ -103,6 +101,15 @@ export class Hundredpoints {
     } catch (error) {
       output.appendLine(`Error: ${error.message}`);
     }
+  }
+
+  private activateExtensions(): void {
+    output.appendLine("Activating extensions");
+    this.timesheet.activate();
+  }
+
+  private deactivateExtensions(): void {
+    this.timesheet.deactivate();
   }
 }
 

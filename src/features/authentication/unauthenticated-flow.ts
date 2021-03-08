@@ -11,6 +11,8 @@ const ENTER_ACCESS_TOKEN = "Enter access token";
 
 const { HUNDREDPOINTS_ORIGIN, HUNDREDPOINTS_API } = config;
 
+const scope = "visual-studio-code";
+
 export default async function unauthenticatedFlow(): Promise<
   Session | undefined
 > {
@@ -40,9 +42,7 @@ export default async function unauthenticatedFlow(): Promise<
       if (maybeSignIn === GET_ACCESS_TOKEN) {
         output.appendLine("Opening browser for new access token");
         await vscode.env.openExternal(
-          Uri.parse(
-            `${HUNDREDPOINTS_ORIGIN}/integrations/auth/visual-studio-code`
-          )
+          Uri.parse(`${HUNDREDPOINTS_ORIGIN}/integrations/auth/${scope}`)
         );
       }
 
@@ -51,6 +51,7 @@ export default async function unauthenticatedFlow(): Promise<
         {
           prompt: "Enter your HundredPoints access token here.",
           ignoreFocusOut: true,
+          password: true,
         },
         cancellationToken
       );
@@ -64,10 +65,30 @@ export default async function unauthenticatedFlow(): Promise<
         output.appendLine("Validating access token");
         progress.report({ increment: 30, message: "Validating" });
 
-        const { me } = await getClient({
+        const payload = JSON.parse(
+          Buffer.from(accessToken.split(".")[1], "base64").toString("utf8")
+        );
+
+        console.log(payload);
+
+        const scopes: string[] = payload.scopes || [];
+
+        if (!scopes.includes(scope)) {
+          output.appendLine(`Token does not have the scope '${scope}'`);
+          return;
+        }
+        const client = getClient({
           token: accessToken,
           url: HUNDREDPOINTS_API,
-        }).me();
+        });
+
+        await client.completeInstallationSetup();
+        const { me } = await client.me();
+
+        if (cancellationToken.isCancellationRequested) {
+          output.appendLine("User cancelled authentication, aborting");
+          return;
+        }
 
         if (cancellationToken.isCancellationRequested) {
           output.appendLine("User cancelled authentication, aborting");
@@ -81,7 +102,11 @@ export default async function unauthenticatedFlow(): Promise<
           message: "Successfully authenticated, saving credentials",
         });
 
-        await saveCredentials(me.profile.id, accessToken);
+        await saveCredentials(
+          config.HUNDREDPOINTS_ORIGIN,
+          me.profile.id,
+          accessToken
+        );
 
         output.appendLine(`Successfully saved credentials`);
 
@@ -90,14 +115,16 @@ export default async function unauthenticatedFlow(): Promise<
           message: `Successfully authenticated as ${me.profile.name}`,
         });
 
+        vscode.window.showInformationMessage(
+          "HundredPoints: Successfully authenticated."
+        );
+
         return {
           token: accessToken,
           user: me,
           profile: me.profile,
         };
       } catch (error) {
-        output.appendLine("seomthi");
-        console.log(error);
         output.appendLine(error);
 
         output.appendLine(

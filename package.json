@@ -22,8 +22,8 @@
         "category": "HundredPoints"
       },
       {
-        "command": "hundredpoints.clearCredentials",
-        "title": "Clear credentials",
+        "command": "hundredpoints.logout",
+        "title": "Logout",
         "category": "HundredPoints"
       }
     ]
@@ -71,8 +71,7 @@
     "webpack-cli": "^4.4.0"
   },
   "dependencies": {
-    "@hundredpoints/cli": "0.3.9",
-    "keytar": "^7.3.0",
+    "@hundredpoints/cli": "0.4.0",
     "path-is-inside": "^1.0.2",
     "pretty-ms": "^7.0.1",
     "react": "^17.0.1",

@@ -10,7 +10,7 @@ import config from "../../config";
 
 export default async function authenticate(): Promise<Session | undefined> {
   try {
-    const credentialArray = await getCredentials();
+    const credentialArray = await getCredentials(config.HUNDREDPOINTS_ORIGIN);
 
     output.appendLine(`Found ${credentialArray.length} sets of credentials`);
 
@@ -39,7 +39,7 @@ export default async function authenticate(): Promise<Session | undefined> {
           return session;
         } catch (error) {
           console.log(error);
-          deleteCredential(account);
+          deleteCredential(config.HUNDREDPOINTS_ORIGIN, account);
           return;
         }
       })
