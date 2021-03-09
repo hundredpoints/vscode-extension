@@ -15,7 +15,7 @@ function log(line: string): void {
 }
 
 function logError(line: string): void {
-  output.appendLine(`[Timesheet] [⚠] ${line}`);
+  output.appendLine(`[Timesheet] ⚠ ${line}`);
 }
 
 const fileBlacklist = [/^extension-output/];
@@ -155,6 +155,8 @@ export default class TimesheetFeature {
       filename = getRelativeFilename(filename, repository);
       gitRemoteUrl = getRepositoryRemote(repository);
     }
+
+    console.log(gitRemoteUrl);
 
     try {
       await this.parent.getClient().createActivityEvent({

@@ -1,4 +1,4 @@
-import output from "../../output";
+// spell-checker: words asar
 
 /**
  * Taken from VSCode docs
