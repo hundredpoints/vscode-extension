@@ -3,20 +3,15 @@ import vscode, { ExtensionContext, Disposable } from "vscode";
 import prettyMilliseconds from "pretty-ms";
 import { ActivityEventSource } from "@hundredpoints/cli";
 import { Hundredpoints } from "src/extension";
-import output from "../../output";
+
+import createLogger from "../../logger";
 import {
   findFileRepository,
   getRelativeFilename,
   getRepositoryRemote,
 } from "../git";
 
-function log(line: string): void {
-  output.appendLine(`[Timesheet] ${line}`);
-}
-
-function logError(line: string): void {
-  output.appendLine(`[Timesheet] ⚠ ${line}`);
-}
+const logger = createLogger("Timesheet");
 
 const fileBlacklist = [/^extension-output/];
 
@@ -43,7 +38,7 @@ export default class TimesheetFeature {
     this.parent = parent;
     this.context = parent.getContext();
 
-    log("Initializing timesheet extension");
+    logger.log("Initializing timesheet extension");
     const subscriptions: Disposable[] = [];
 
     vscode.window.onDidChangeTextEditorSelection(
@@ -62,7 +57,7 @@ export default class TimesheetFeature {
   }
 
   public activate(): void {
-    log("Active");
+    logger.log("Active");
     this.active = true;
   }
 
@@ -101,12 +96,12 @@ export default class TimesheetFeature {
     let filename = vscode.window.activeTextEditor?.document?.fileName;
 
     if (!filename) {
-      log("No active file");
+      logger.log("No active file");
       return this.clearActivity();
     }
 
     if (!vscode.window.state.focused) {
-      log("Window has lost focus");
+      logger.log("Window has lost focus");
       return this.clearActivity();
     }
 
@@ -115,7 +110,7 @@ export default class TimesheetFeature {
     }
 
     this.idleTimeout = setTimeout(() => {
-      log("Idle limit reached");
+      logger.log("Idle limit reached");
       this.clearActivity();
     }, this.idleLimit);
 
@@ -140,12 +135,12 @@ export default class TimesheetFeature {
     }
 
     if (fileBlacklist.some((regex) => filename && regex.test(filename))) {
-      log("Skipping blacklisted file");
+      logger.log("Skipping blacklisted file");
       return;
     }
 
     this.lastEventTimestamp = timestamp;
-    log(`Handle activity for ${filename}`);
+    logger.log(`Handle activity for ${filename}`);
 
     const repository = findFileRepository(filename);
 
@@ -169,10 +164,10 @@ export default class TimesheetFeature {
         },
       });
 
-      log(`Successfully created activity event for ${filename}`);
+      logger.log(`Successfully created activity event for ${filename}`);
     } catch (error) {
       vscode.window.showErrorMessage("Error when saving timesheet data");
-      logError(error.response.errors[0].message);
+      logger.error(error.response.errors[0].message);
     }
   }
 }

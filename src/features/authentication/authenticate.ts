@@ -5,22 +5,27 @@ import { Session } from ".";
 
 import { deleteCredential, getCredentials } from "./store";
 import unauthenticatedFlow from "./unauthenticated-flow";
-import output from "../../output";
+import createLogger from "../../logger";
 import config from "../../config";
+
+const logger = createLogger("Authentication");
 
 export default async function authenticate(): Promise<Session | undefined> {
   try {
+    logger.log(
+      `Starting authentication for origin ${config.HUNDREDPOINTS_ORIGIN}`
+    );
     const credentialArray = await getCredentials(config.HUNDREDPOINTS_ORIGIN);
 
-    output.appendLine(`Found ${credentialArray.length} sets of credentials`);
+    logger.log(`Found ${credentialArray.length} sets of credentials`);
 
     if (credentialArray.length === 0) {
-      output.appendLine(`Starting unauthenticatedFlow`);
+      logger.log(`Starting unauthenticatedFlow`);
       return unauthenticatedFlow();
     }
 
     const credentialTests = await Promise.all(
-      credentialArray.map(async ({ token, account }) => {
+      credentialArray.map(async ({ account, token }) => {
         if (!token) {
           return;
         }
@@ -38,7 +43,7 @@ export default async function authenticate(): Promise<Session | undefined> {
           };
           return session;
         } catch (error) {
-          console.log(error);
+          logger.error(account, error);
           deleteCredential(config.HUNDREDPOINTS_ORIGIN, account);
           return;
         }
@@ -49,11 +54,11 @@ export default async function authenticate(): Promise<Session | undefined> {
     const credentials = credentialTests.find(Boolean);
 
     if (!credentials) {
-      output.appendLine(`Unable to find valid credentials`);
+      logger.log(`Unable to find valid credentials`);
       return unauthenticatedFlow();
     }
 
-    output.appendLine(`Authenticated as ${credentials.profile.name}`);
+    logger.log(`Authenticated as ${credentials.profile.name}`);
     return credentials;
   } catch (error) {
     console.error(error);

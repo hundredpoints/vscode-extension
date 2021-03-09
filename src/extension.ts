@@ -1,6 +1,6 @@
 import vscode, { ExtensionContext } from "vscode";
 
-import authenticate from "./features/authentication";
+import authenticate, { Session } from "./features/authentication";
 
 import { registerCommands } from "./commands";
 
@@ -8,9 +8,11 @@ import getClient, { Sdk } from "@hundredpoints/cli";
 
 /** Features */
 import TimesheetFeature from "./features/timesheet";
-import output from "./output";
+import createLogger from "./logger";
 import config from "./config";
 import { deleteCredential } from "./features/authentication/store";
+
+const logger = createLogger("Extension");
 
 /**
  * Singleton Class for the HundredPoints Extension
@@ -46,12 +48,12 @@ export class Hundredpoints {
   private constructor(context: ExtensionContext) {
     this.context = context;
 
-    output.appendLine("Initializing");
+    logger.log("Initializing");
 
     registerCommands(this);
     this.timesheet = new TimesheetFeature(this);
 
-    output.appendLine("Initialized");
+    logger.log("Initialized");
 
     this.authenticate();
   }
@@ -78,33 +80,29 @@ export class Hundredpoints {
   }
 
   public async authenticate(): Promise<void> {
-    try {
-      output.appendLine("Checking authentication");
-      const response = await authenticate();
+    logger.log("Checking authentication");
+    const response = await authenticate();
 
-      if (!response) {
-        return;
-      }
-
-      output.appendLine("Successfully authenticated");
-
-      this.accessToken = response.token;
-      this.profileId = response.profile.id;
-
-      this.client = getClient({
-        token: this.accessToken,
-        url: config.HUNDREDPOINTS_API,
-      });
-
-      this.activateExtensions();
-      this.statusBar.hide();
-    } catch (error) {
-      output.appendLine(`Error: ${error.message}`);
+    if (!response) {
+      return;
     }
+
+    logger.log("Successfully authenticated");
+
+    this.accessToken = response.token;
+    this.profileId = response.profile.id;
+
+    this.client = getClient({
+      token: this.accessToken,
+      url: config.HUNDREDPOINTS_API,
+    });
+
+    this.activateExtensions();
+    this.statusBar.hide();
   }
 
   private activateExtensions(): void {
-    output.appendLine("Activating extensions");
+    logger.log("Activating extensions");
     this.timesheet.activate();
   }
 
