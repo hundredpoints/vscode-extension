@@ -2,7 +2,7 @@
   "name": "hundredpoints",
   "displayName": "Hundredpoints",
   "description": "",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "publisher": "HundredPoints",
   "engines": {
     "vscode": "^1.52.0"
