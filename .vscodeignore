@@ -2,6 +2,7 @@
 */**
 **/.DS_Store
 !dist/*
+!images/*
 !package.json
 !README.md
 !CHANGELOG.md
